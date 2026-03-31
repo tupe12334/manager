@@ -2,13 +2,15 @@ use std::fs;
 use std::path::Path;
 
 const MCP_CONFIG: &str = r#"{
-  "kokoro-tts": {
-    "command": "npx",
-    "args": ["claude-tts-mcp"]
-  },
-  "playwright": {
-    "command": "npx",
-    "args": ["@playwright/mcp@latest"]
+  "mcpServers": {
+    "kokoro-tts": {
+      "command": "npx",
+      "args": ["claude-tts-mcp"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
   }
 }
 "#;
