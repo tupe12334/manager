@@ -12,7 +12,7 @@ if [ -f "$LOCK" ]; then
   exit 0
 fi
 touch "$LOCK"
-printf "Call mcp__kokoro-tts__generate_speech to speak your last response aloud to the user."
+printf "Call the mcp__kokoro-tts__generate_speech tool to speak your last response aloud."
 exit 2
 "#;
 

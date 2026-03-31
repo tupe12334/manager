@@ -4,12 +4,12 @@ use std::path::Path;
 const MCP_CONFIG: &str = r#"{
   "mcpServers": {
     "kokoro-tts": {
-      "command": "npx",
-      "args": ["claude-tts-mcp"]
+      "command": "pnpm",
+      "args": ["dlx", "claude-tts-mcp"]
     },
     "playwright": {
-      "command": "npx",
-      "args": ["@playwright/mcp@latest"]
+      "command": "pnpm",
+      "args": ["dlx", "@playwright/mcp@latest"]
     }
   }
 }
