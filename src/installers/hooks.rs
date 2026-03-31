@@ -4,7 +4,9 @@ use std::path::Path;
 const SPEAK_SCRIPT: &str = r#"#!/bin/bash
 # Stop hook: wakes the current Claude session (asyncRewake) and asks it to speak
 # the last response using the kokoro-tts MCP tool.
+# Only runs when launched via the Manager app (MANAGER_SESSION=1).
 # The lock file prevents re-triggering after Claude has spoken.
+[ -z "$MANAGER_SESSION" ] && exit 0
 SESSION=$(cat | jq -r '.session_id // "unknown"' 2>/dev/null)
 LOCK="/tmp/claude-tts-spoke-${SESSION}"
 if [ -f "$LOCK" ]; then

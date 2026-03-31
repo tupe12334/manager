@@ -4,7 +4,7 @@ use std::path::PathBuf;
 mod installers;
 
 const CLAUDE_CMD: &str =
-    "claude --allow-dangerously-skip-permissions --mcp-config ~/.config/claude-launcher/mcp.json";
+    "MANAGER_SESSION=1 claude --allow-dangerously-skip-permissions --mcp-config ~/.config/claude-launcher/mcp.json";
 
 fn main() {
     let home = dirs::home_dir().expect("could not determine home directory");
