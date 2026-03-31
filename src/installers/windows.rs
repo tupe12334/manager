@@ -10,13 +10,11 @@ pub fn install_windows(home: &Path, claude_cmd: &str) {
 
     let bat = dir.join("claude.bat");
     let script = format!(
-        "@echo off\ncd /d %USERPROFILE%\nSET MANAGER_SESSION=1\n{}\n",
-        claude_cmd
-            .replace("MANAGER_SESSION=1 ", "")
-            .replace(
-                "~/.config/claude-launcher/mcp.json",
-                "%USERPROFILE%\\.config\\claude-launcher\\mcp.json",
-            )
+        "@echo off\ncd /d %USERPROFILE%\n{}\n",
+        claude_cmd.replace(
+            "~/.config/claude-launcher/mcp.json",
+            "%USERPROFILE%\\.config\\claude-launcher\\mcp.json"
+        )
     );
     crate::write_if_changed(&bat, &script);
 
