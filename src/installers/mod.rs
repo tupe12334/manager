@@ -1,3 +1,4 @@
+pub mod hooks;
 pub mod mcp;
 
 #[cfg(target_os = "macos")]

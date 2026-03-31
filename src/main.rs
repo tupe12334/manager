@@ -12,6 +12,7 @@ fn main() {
     println!("Installing Claude Code launcher...\n");
 
     installers::mcp::setup_mcp_config(&home);
+    installers::hooks::setup_hooks(&home);
 
     #[cfg(target_os = "macos")]
     installers::macos::install_macos(&home, CLAUDE_CMD);
