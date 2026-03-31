@@ -53,7 +53,7 @@ fn setup_mcp_config(home: &Path) {
 fn install_macos(home: &Path) {
     use std::os::unix::fs::PermissionsExt;
 
-    let app = home.join("Applications").join("Claude.app");
+    let app = home.join("Applications").join("Manager.app");
     let macos_dir = app.join("Contents").join("MacOS");
     fs::create_dir_all(&macos_dir).expect("failed to create app bundle dirs");
 
@@ -78,8 +78,8 @@ const MACOS_PLIST: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key>   <string>claude-launcher</string>
-  <key>CFBundleIdentifier</key>  <string>com.claude.launcher</string>
-  <key>CFBundleName</key>        <string>Claude</string>
+  <key>CFBundleIdentifier</key>  <string>com.manager.launcher</string>
+  <key>CFBundleName</key>        <string>Manager</string>
   <key>CFBundlePackageType</key> <string>APPL</string>
   <key>CFBundleVersion</key>     <string>1.0</string>
 </dict>
@@ -109,7 +109,7 @@ fn install_linux(home: &Path) {
     let desktop_dir = home.join(".local").join("share").join("applications");
     fs::create_dir_all(&desktop_dir).expect("failed to create applications dir");
     let desktop = format!(
-        "[Desktop Entry]\nName=Claude\nExec={}\nType=Application\nTerminal=true\nIcon=utilities-terminal\nCategories=Development;\n",
+        "[Desktop Entry]\nName=Manager\nExec={}\nType=Application\nTerminal=true\nIcon=utilities-terminal\nCategories=Development;\n",
         script.display()
     );
     write_if_changed(&desktop_dir.join("claude.desktop"), &desktop);
