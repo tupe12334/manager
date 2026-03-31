@@ -36,7 +36,7 @@ TEXT=""
 if [ -n "$SESSION" ]; then
   JSONL=$(find ~/.claude/projects -name "${SESSION}.jsonl" 2>/dev/null | head -1)
   if [ -n "$JSONL" ]; then
-    TEXT=$(jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "text") | .text' "$JSONL" 2>/dev/null | tail -c 800)
+    TEXT=$(jq -r 'select(.message.role == "assistant") | .message.content[]? | select(.type == "text") | .text' "$JSONL" 2>/dev/null | tail -c 800)
   fi
 fi
 
