@@ -1,0 +1,12 @@
+[package]
+name = "manager"
+version = "0.1.0"
+edition = "2024"
+description = "Idempotent installer for a Claude Code launcher app (macOS / Linux / Windows)"
+
+[[bin]]
+name = "install"
+path = "src/main.rs"
+
+[dependencies]
+dirs = "5"
