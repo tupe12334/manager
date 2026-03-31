@@ -2,10 +2,11 @@ use std::fs;
 use std::path::Path;
 
 const SPEAK_SCRIPT: &str = r#"#!/bin/bash
-# Stop hook: wakes the current Claude session (asyncRewake) and asks it to speak
-# the last response using the kokoro-tts MCP tool.
+# Stop hook: wakes the current Claude session (asyncRewake) with the exact text
+# to speak, so Claude can call mcp__kokoro-tts__generate_speech directly.
 # Only runs when launched via the Manager app (detected via ancestor process args).
-# The lock file prevents re-triggering after Claude has spoken.
+
+# --- Manager session detection ---
 IS_MANAGER=0
 pid=$PPID
 for i in 1 2 3 4 5; do
@@ -17,14 +18,33 @@ for i in 1 2 3 4 5; do
   [ "${pid:-0}" -le 1 ] 2>/dev/null && break
 done
 [ "$IS_MANAGER" -eq 0 ] && exit 0
-SESSION=$(cat | jq -r '.session_id // "unknown"' 2>/dev/null)
-LOCK="/tmp/claude-tts-spoke-${SESSION}"
+
+# --- Read session data ---
+DATA=$(cat)
+SESSION=$(echo "$DATA" | jq -r '.session_id // ""' 2>/dev/null)
+
+# --- Lock file prevents re-triggering after Claude has spoken ---
+LOCK="/tmp/claude-tts-spoke-${SESSION:-unknown}"
 if [ -f "$LOCK" ]; then
   rm "$LOCK"
   exit 0
 fi
 touch "$LOCK"
-printf "Silently call mcp__kokoro-tts__generate_speech to speak your last response aloud. If the tool is unavailable, stop without saying anything."
+
+# --- Extract last assistant message from session JSONL ---
+TEXT=""
+if [ -n "$SESSION" ]; then
+  JSONL=$(find ~/.claude/projects -name "${SESSION}.jsonl" 2>/dev/null | head -1)
+  if [ -n "$JSONL" ]; then
+    TEXT=$(jq -r 'select(.type == "assistant") | .message.content[]? | select(.type == "text") | .text' "$JSONL" 2>/dev/null | tail -c 800)
+  fi
+fi
+
+if [ -z "$TEXT" ]; then
+  exit 0
+fi
+
+printf 'Call mcp__kokoro-tts__generate_speech with play_audio=true and this exact text: %s' "$TEXT"
 exit 2
 "#;
 
