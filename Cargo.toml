@@ -11,3 +11,8 @@ path = "src/main.rs"
 [dependencies]
 dirs = "5"
 serde_json = "1"
+
+[lints.clippy]
+# Catch eagerly-evaluated arguments to `unwrap_or`/`or`/`get_or_insert` and
+# friends that should be deferred to their `*_else` lazy counterparts.
+or_fun_call = "deny"
