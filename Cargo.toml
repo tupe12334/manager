@@ -13,6 +13,11 @@ dirs = "5"
 serde_json = "1"
 
 [lints.clippy]
+# Require a `# Panics` documentation section on public, documented functions that
+# may panic. Callers reading the docs should know up front which inputs or states
+# can abort the program, instead of discovering it from a runtime crash. This
+# keeps the panic contract of the public API explicit and accurate.
+missing_panics_doc = "deny"
 # Flatten nested `if` statements that can be combined with `&&`. Deeply nested
 # conditionals add indentation and obscure the single combined condition that is
 # actually being checked; collapsing them keeps control flow flat and readable.
