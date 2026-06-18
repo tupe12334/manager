@@ -37,11 +37,9 @@ fn main() {
 /// Panics if writing to `path` fails (for example, when the parent directory
 /// does not exist or the process lacks permission to write there).
 pub fn write_if_changed(path: &PathBuf, content: &str) {
-    if path.exists() {
-        if fs::read_to_string(path).ok().as_deref() == Some(content) {
-            println!("  unchanged  {}", path.display());
-            return;
-        }
+    if path.exists() && fs::read_to_string(path).ok().as_deref() == Some(content) {
+        println!("  unchanged  {}", path.display());
+        return;
     }
     fs::write(path, content)
         .unwrap_or_else(|e| panic!("failed to write {}: {e}", path.display()));
