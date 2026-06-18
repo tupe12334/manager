@@ -32,11 +32,9 @@ fn main() {
 
 /// Write `content` to `path` only if it differs from the current contents.
 pub fn write_if_changed(path: &PathBuf, content: &str) {
-    if path.exists() {
-        if fs::read_to_string(path).ok().as_deref() == Some(content) {
-            println!("  unchanged  {}", path.display());
-            return;
-        }
+    if path.exists() && fs::read_to_string(path).ok().as_deref() == Some(content) {
+        println!("  unchanged  {}", path.display());
+        return;
     }
     fs::write(path, content)
         .unwrap_or_else(|e| panic!("failed to write {}: {e}", path.display()));
