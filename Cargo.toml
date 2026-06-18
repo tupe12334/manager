@@ -29,3 +29,10 @@ collapsible_if = "deny"
 # call sites surface as tracked tech debt without breaking the build; new code
 # should prefer `?`-based error propagation over `expect`.
 expect_used = "warn"
+# Prefer `let ... else { diverge }` over a verbose `match`/`if let ... else`
+# whose only job is to bind the happy path and otherwise return/break/continue.
+# The dedicated construct states "bind or diverge" in one line, keeps the bound
+# value at the outer scope without extra nesting, and flattens control flow. No
+# current violations exist, so `deny` keeps the build green while preventing
+# future regressions.
+manual_let_else = "deny"
