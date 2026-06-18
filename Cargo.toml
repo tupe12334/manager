@@ -17,3 +17,9 @@ serde_json = "1"
 # conditionals add indentation and obscure the single combined condition that is
 # actually being checked; collapsing them keeps control flow flat and readable.
 collapsible_if = "deny"
+# Inline trivial arguments directly into format strings (`format!("{x}")` instead
+# of `format!("{}", x)`). This crate is format-heavy (the per-OS installer scripts
+# are built with `format!`), and inline captures keep each format call's data next
+# to its placeholder, which is shorter and easier to read. The codebase already
+# follows this style; enabling the lint locks it in and catches regressions.
+uninlined_format_args = "deny"
