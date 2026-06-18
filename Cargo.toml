@@ -29,3 +29,10 @@ collapsible_if = "deny"
 # call sites surface as tracked tech debt without breaking the build; new code
 # should prefer `?`-based error propagation over `expect`.
 expect_used = "warn"
+# Flag `.unwrap()` on `Result`/`Option`, the sibling footgun to `expect()`: it
+# panics on `Err`/`None` with no context at all, aborting a partially-applied
+# install instead of propagating a recoverable error. The codebase currently has
+# zero `unwrap()` call sites, so this is set to "deny" (stronger than the `warn`
+# used for `expect_used`, which has grandfathered call sites) to lock in that
+# clean state and force new code onto `?`-based error propagation.
+unwrap_used = "deny"
