@@ -31,6 +31,11 @@ fn main() {
 // ---------------------------------------------------------------------------
 
 /// Write `content` to `path` only if it differs from the current contents.
+///
+/// # Panics
+///
+/// Panics if writing to `path` fails (for example, when the parent directory
+/// does not exist or the process lacks permission to write there).
 pub fn write_if_changed(path: &PathBuf, content: &str) {
     if path.exists() {
         if fs::read_to_string(path).ok().as_deref() == Some(content) {
