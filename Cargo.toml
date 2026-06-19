@@ -30,6 +30,14 @@ map_unwrap_or = "deny"
 # can abort the program, instead of discovering it from a runtime crash. This
 # keeps the panic contract of the public API explicit and accurate.
 missing_panics_doc = "deny"
+# Require an `# Errors` documentation section on public, documented functions that
+# return `Result`. This is the sibling of `missing_panics_doc` for the crate's
+# `?`-based error-propagation policy: callers should learn from the docs which
+# conditions yield an `Err` (failed filesystem ops, missing config, bad paths)
+# instead of discovering them at runtime. Documenting the error contract keeps the
+# fallible public API explicit and accurate. No current violations exist, so `deny`
+# locks in the clean state and prevents future regressions.
+missing_errors_doc = "deny"
 # Flatten nested `if` statements that can be combined with `&&`. Deeply nested
 # conditionals add indentation and obscure the single combined condition that is
 # actually being checked; collapsing them keeps control flow flat and readable.
