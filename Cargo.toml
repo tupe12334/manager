@@ -96,3 +96,10 @@ redundant_else = "deny"
 # panic on a non-object value in an existing settings.json) has been rewritten to
 # use the serde_json map API, so `deny` locks in the clean state.
 indexing_slicing = "deny"
+# Use `Self` instead of repeating the concrete type name inside an `impl` block
+# (return types, `Type { .. }` literals, `Type::new()` calls, associated paths).
+# `Self` is refactor-safe (renaming the type needs no edits inside its own impls),
+# makes it unambiguous that a value is the impl's own type, and keeps impl bodies
+# uniform. No current violations exist, so `deny` locks in the clean state and
+# prevents future regressions.
+use_self = "deny"
