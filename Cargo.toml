@@ -16,7 +16,26 @@ serde_json = "1"
 # Catch eagerly-evaluated arguments to `unwrap_or`/`or`/`get_or_insert` and
 # friends that should be deferred to their `*_else` lazy counterparts.
 or_fun_call = "deny"
+# Require a `# Panics` documentation section on public, documented functions that
+# may panic. Callers reading the docs should know up front which inputs or states
+# can abort the program, instead of discovering it from a runtime crash. This
+# keeps the panic contract of the public API explicit and accurate.
+missing_panics_doc = "deny"
 # Flatten nested `if` statements that can be combined with `&&`. Deeply nested
 # conditionals add indentation and obscure the single combined condition that is
 # actually being checked; collapsing them keeps control flow flat and readable.
 collapsible_if = "deny"
+# Flag `.expect()` on `Result`/`Option`. This installer performs many filesystem
+# operations (create dirs, chmod, read/write config) whose failures should be
+# reported with context and propagated, not turned into a panic + backtrace that
+# leaves the install half-applied. Set to "warn" (not "deny") so the existing
+# call sites surface as tracked tech debt without breaking the build; new code
+# should prefer `?`-based error propagation over `expect`.
+expect_used = "warn"
+# Prefer `let ... else { diverge }` over a verbose `match`/`if let ... else`
+# whose only job is to bind the happy path and otherwise return/break/continue.
+# The dedicated construct states "bind or diverge" in one line, keeps the bound
+# value at the outer scope without extra nesting, and flattens control flow. No
+# current violations exist, so `deny` keeps the build green while preventing
+# future regressions.
+manual_let_else = "deny"
