@@ -96,3 +96,14 @@ redundant_else = "deny"
 # panic on a non-object value in an existing settings.json) has been rewritten to
 # use the serde_json map API, so `deny` locks in the clean state.
 indexing_slicing = "deny"
+# Steer `&str` -> `String` conversions to `.to_owned()` instead of `.to_string()`.
+# A string slice is owned data being cloned, and `.to_owned()` (from `ToOwned`)
+# names exactly that, whereas `.to_string()` is the generic `ToString`/`Display`
+# conversion whose name reads like formatting rather than an allocation + copy.
+# Using the specific method keeps intent clear and makes every `&str` -> `String`
+# site in the crate look the same. This sits alongside the crate's other focused
+# `restriction`-group choices (`unwrap_used`, `expect_used`, `panic`,
+# `indexing_slicing`). The one prior call site (`"Stop".to_string()` in
+# `installers::hooks`) has been switched to `.to_owned()`, so `deny` locks in the
+# clean state and prevents regressions.
+str_to_string = "deny"
