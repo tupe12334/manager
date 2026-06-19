@@ -78,3 +78,13 @@ panic = "warn"
 # and `manual_let_else` denies. No current violations exist, so `deny` keeps the
 # build green while preventing future regressions.
 redundant_else = "deny"
+# Flag `let _ = <expr>` where `<expr>` is `#[must_use]` (most importantly a
+# `Result`). Binding to `_` both discards the value and silences the
+# `unused_must_use` warning, so a failed operation is dropped with no error and
+# no diagnostic. This installer is filesystem-heavy (create dirs, chmod,
+# read/write config); a silently ignored `Result` can leave an install
+# half-applied with no signal. The lint closes the gap left by the crate's
+# existing error-safety policy (`unwrap_used`/`expect_used`/`panic`) by stopping
+# errors from being thrown away via `let _`. No current violations exist, so
+# `deny` locks in the clean state and prevents regressions.
+let_underscore_must_use = "deny"
