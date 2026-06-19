@@ -96,3 +96,14 @@ redundant_else = "deny"
 # panic on a non-object value in an existing settings.json) has been rewritten to
 # use the serde_json map API, so `deny` locks in the clean state.
 indexing_slicing = "deny"
+# Replace a closure that does nothing but forward its argument to a method call
+# (`|s| s.to_string()`, `|p| p.display()`, `|e| e.to_string()`) with a direct
+# method reference (`ToString::to_string`, `Path::display`). This crate is
+# closure-heavy: the per-OS installer flows are full of `map`/`unwrap_or_else`
+# chains, and a forwarding closure adds a layer of indirection that hides the
+# single method actually being applied. The method-reference form is shorter,
+# states the intent directly, and reads in the same family as the crate's other
+# readability denies (`map_unwrap_or`, `redundant_else`, `manual_let_else`). No
+# current violations exist, so `deny` locks in the clean state and prevents
+# future regressions.
+redundant_closure_for_method_calls = "deny"
