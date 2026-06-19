@@ -61,3 +61,11 @@ manual_let_else = "deny"
 # the build, while new `panic!` macros are discouraged in favor of contextful
 # error handling.
 panic = "warn"
+# Flag an `else` block that follows an `if` whose every branch diverges
+# (`return`/`break`/`continue`/`panic!`): the `else` is redundant because the
+# happy path can simply continue at the outer scope. Dropping it removes a level
+# of indentation and makes the early-exit guard read as a guard. This sits in the
+# same control-flow-flattening family as the crate's existing `collapsible_if`
+# and `manual_let_else` denies. No current violations exist, so `deny` keeps the
+# build green while preventing future regressions.
+redundant_else = "deny"
