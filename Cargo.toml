@@ -78,3 +78,13 @@ panic = "warn"
 # and `manual_let_else` denies. No current violations exist, so `deny` keeps the
 # build green while preventing future regressions.
 redundant_else = "deny"
+# Flag direct `[]` indexing/slicing (`v[i]`, `s[a..b]`, `value["key"]`) that
+# panics out of bounds, in favor of the non-panicking `.get(..)` / `.get_mut(..)`
+# accessors. This extends the crate's panic-safety policy (`unwrap_used`,
+# `expect_used`, `panic`, `missing_panics_doc`) to indexing: an installer that
+# aborts mid-run on an unexpected index can leave the install half-applied, so
+# fallible lookups should be handled explicitly rather than panic with a raw
+# backtrace. The one prior call site (`settings["hooks"]["Stop"]`, which would
+# panic on a non-object value in an existing settings.json) has been rewritten to
+# use the serde_json map API, so `deny` locks in the clean state.
+indexing_slicing = "deny"
