@@ -61,3 +61,12 @@ manual_let_else = "deny"
 # the build, while new `panic!` macros are discouraged in favor of contextful
 # error handling.
 panic = "warn"
+# Flag `match` arms whose bodies are identical and could be merged with a `|`
+# pattern. Two arms with the same body are usually either an accidental
+# copy-paste (the second body should differ but was never edited) or needless
+# duplication that drifts out of sync when only one copy is updated. This
+# installer branches per-OS in several `match`es, so collapsing identical arms
+# keeps the platform logic honest and surfaces arms that were *meant* to diverge.
+# No current violations exist, so `deny` locks in the clean state and prevents
+# future regressions.
+match_same_arms = "deny"
