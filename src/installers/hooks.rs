@@ -71,7 +71,7 @@ fn setup_stop_hook(home: &Path) {
     let mut settings: serde_json::Value = if settings_path.exists() {
         let content =
             fs::read_to_string(&settings_path).expect("failed to read ~/.claude/settings.json");
-        serde_json::from_str(&content).unwrap_or(serde_json::json!({}))
+        serde_json::from_str(&content).unwrap_or_else(|_| serde_json::json!({}))
     } else {
         serde_json::json!({})
     };
