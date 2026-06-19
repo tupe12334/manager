@@ -25,6 +25,12 @@ missing_panics_doc = "deny"
 # conditionals add indentation and obscure the single combined condition that is
 # actually being checked; collapsing them keeps control flow flat and readable.
 collapsible_if = "deny"
+# Inline trivial arguments directly into format strings (`format!("{x}")` instead
+# of `format!("{}", x)`). This crate is format-heavy (the per-OS installer scripts
+# are built with `format!`), and inline captures keep each format call's data next
+# to its placeholder, which is shorter and easier to read. The codebase already
+# follows this style; enabling the lint locks it in and catches regressions.
+uninlined_format_args = "deny"
 # Flag `.expect()` on `Result`/`Option`. This installer performs many filesystem
 # operations (create dirs, chmod, read/write config) whose failures should be
 # reported with context and propagated, not turned into a panic + backtrace that
