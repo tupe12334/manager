@@ -36,3 +36,12 @@ expect_used = "warn"
 # current violations exist, so `deny` keeps the build green while preventing
 # future regressions.
 manual_let_else = "deny"
+# Flag the `panic!`/`unreachable!`/`todo!`/`unimplemented!` macros. This extends
+# the crate's existing panic-safety policy (`missing_panics_doc`, `expect_used`)
+# to explicit panic macros: an installer that aborts mid-run can leave the
+# install half-applied, so failures should carry context and ideally propagate
+# rather than crash with a raw backtrace. Set to "warn" (mirroring `expect_used`)
+# so the one existing call site surfaces as tracked tech debt without breaking
+# the build, while new `panic!` macros are discouraged in favor of contextful
+# error handling.
+panic = "warn"
