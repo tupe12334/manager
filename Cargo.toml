@@ -96,3 +96,13 @@ redundant_else = "deny"
 # panic on a non-object value in an existing settings.json) has been rewritten to
 # use the serde_json map API, so `deny` locks in the clean state.
 indexing_slicing = "deny"
+# Flag `if !cond { a } else { b }` and suggest inverting the test to the positive
+# form `if cond { b } else { a }`. A negated condition forces the reader to flip
+# the logic in their head before they can match each branch to its trigger, and it
+# reads especially awkwardly when the `else` is the common/happy path. Stating the
+# condition positively keeps the branch that fires "when the thing is true" first
+# and makes the two-way choice read top-to-bottom. This sits in the same
+# control-flow-readability family as the crate's existing `collapsible_if`,
+# `redundant_else`, and `manual_let_else` denies. No current violations exist, so
+# `deny` locks in the clean state and prevents future regressions.
+if_not_else = "deny"
