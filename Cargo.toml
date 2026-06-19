@@ -36,3 +36,10 @@ expect_used = "warn"
 # used for `expect_used`, which has grandfathered call sites) to lock in that
 # clean state and force new code onto `?`-based error propagation.
 unwrap_used = "deny"
+# Prefer `let ... else { diverge }` over a verbose `match`/`if let ... else`
+# whose only job is to bind the happy path and otherwise return/break/continue.
+# The dedicated construct states "bind or diverge" in one line, keeps the bound
+# value at the outer scope without extra nesting, and flattens control flow. No
+# current violations exist, so `deny` keeps the build green while preventing
+# future regressions.
+manual_let_else = "deny"
