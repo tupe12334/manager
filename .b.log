@@ -1,0 +1,11 @@
+   Compiling libc v0.2.183
+   Compiling serde_core v1.0.228
+   Compiling zmij v1.0.21
+   Compiling option-ext v0.2.0
+   Compiling serde_json v1.0.149
+   Compiling memchr v2.8.0
+   Compiling itoa v1.0.18
+   Compiling dirs-sys v0.4.1
+   Compiling dirs v5.0.1
+   Compiling manager v0.1.0 (/private/tmp/cf3-manager)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 58.46s
