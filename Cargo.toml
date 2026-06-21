@@ -95,6 +95,15 @@ panic = "warn"
 # No current violations exist, so `deny` locks in the clean state and prevents
 # future regressions.
 match_same_arms = "deny"
+# Require a terminating `;` on the final statement of a block when that statement
+# evaluates to `()`, instead of leaving it as a bare tail expression. This crate
+# is full of side-effecting filesystem calls (write files, create dirs, chmod);
+# a trailing `;` makes it explicit that such a statement runs for its side effect
+# and yields nothing, rather than reading like a value the block returns. It also
+# pairs with the readability lints already enabled here (`collapsible_if`,
+# `manual_let_else`, `uninlined_format_args`). No current violations exist, so
+# `deny` keeps the build green while preventing future drift.
+semicolon_if_nothing_returned = "deny"
 # Flag an `else` block that follows an `if` whose every branch diverges
 # (`return`/`break`/`continue`/`panic!`): the `else` is redundant because the
 # happy path can simply continue at the outer scope. Dropping it removes a level
