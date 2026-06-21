@@ -165,6 +165,14 @@ redundant_closure_for_method_calls = "deny"
 # `or_fun_call`, and `redundant_closure_for_method_calls` denies. No current
 # violations exist, so `deny` locks in the clean state and prevents regressions.
 redundant_clone = "deny"
+# Prefer `for x in &collection` / `for x in &mut collection` over the explicit
+# `for x in collection.iter()` / `.iter_mut()` form. The reference syntax is
+# shorter, is the idiomatic way to iterate without consuming, and avoids the
+# reader having to confirm that `.iter()` isn't secretly `.into_iter()` (which
+# would move). It sits in the same readability family as the crate's existing
+# `redundant_closure_for_method_calls` and `redundant_else` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+explicit_iter_loop = "deny"
 # Flag a function parameter taken as `&T` where `T` is a small `Copy` type (e.g.
 # `&u8`, `&bool`, `&char`, a tiny `#[derive(Copy)]` struct). For such types the
 # reference is the same size as (or larger than) the value, so passing by
