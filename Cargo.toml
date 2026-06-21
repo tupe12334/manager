@@ -13,6 +13,14 @@ dirs = "5"
 serde_json = "1"
 
 [lints.clippy]
+# Flag function parameters typed as `&PathBuf`/`&String`/`&Vec<T>` that should
+# be the borrowed slice type `&Path`/`&str`/`&[T]` instead. Taking the owned
+# container by reference forces a needlessly narrow API and offers no benefit
+# over the slice form, which accepts more inputs (any `Path`, string literal, or
+# array) with zero extra allocation and states the "I only read this" intent.
+# The installer threads filesystem paths around by reference, so this keeps those
+# signatures general and idiomatic.
+ptr_arg = "deny"
 # Catch eagerly-evaluated arguments to `unwrap_or`/`or`/`get_or_insert` and
 # friends that should be deferred to their `*_else` lazy counterparts.
 or_fun_call = "deny"
@@ -86,6 +94,16 @@ panic = "warn"
 # and `manual_let_else` denies. No current violations exist, so `deny` keeps the
 # build green while preventing future regressions.
 redundant_else = "deny"
+# Flag `let _ = <expr>` where `<expr>` is `#[must_use]` (most importantly a
+# `Result`). Binding to `_` both discards the value and silences the
+# `unused_must_use` warning, so a failed operation is dropped with no error and
+# no diagnostic. This installer is filesystem-heavy (create dirs, chmod,
+# read/write config); a silently ignored `Result` can leave an install
+# half-applied with no signal. The lint closes the gap left by the crate's
+# existing error-safety policy (`unwrap_used`/`expect_used`/`panic`) by stopping
+# errors from being thrown away via `let _`. No current violations exist, so
+# `deny` locks in the clean state and prevents regressions.
+let_underscore_must_use = "deny"
 # Flag direct `[]` indexing/slicing (`v[i]`, `s[a..b]`, `value["key"]`) that
 # panics out of bounds, in favor of the non-panicking `.get(..)` / `.get_mut(..)`
 # accessors. This extends the crate's panic-safety policy (`unwrap_used`,
@@ -103,3 +121,14 @@ indexing_slicing = "deny"
 # uniform. No current violations exist, so `deny` locks in the clean state and
 # prevents future regressions.
 use_self = "deny"
+# Replace a closure that does nothing but forward its argument to a method call
+# (`|s| s.to_string()`, `|p| p.display()`, `|e| e.to_string()`) with a direct
+# method reference (`ToString::to_string`, `Path::display`). This crate is
+# closure-heavy: the per-OS installer flows are full of `map`/`unwrap_or_else`
+# chains, and a forwarding closure adds a layer of indirection that hides the
+# single method actually being applied. The method-reference form is shorter,
+# states the intent directly, and reads in the same family as the crate's other
+# readability denies (`map_unwrap_or`, `redundant_else`, `manual_let_else`). No
+# current violations exist, so `deny` locks in the clean state and prevents
+# future regressions.
+redundant_closure_for_method_calls = "deny"
