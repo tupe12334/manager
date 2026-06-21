@@ -185,3 +185,17 @@ explicit_iter_loop = "deny"
 # choices honest about whether a borrow is actually needed. No current violations
 # exist, so `deny` locks in the clean state and prevents future regressions.
 trivially_copy_pass_by_ref = "deny"
+# Flag a single-character string literal used as a pattern argument to the
+# `str` search/split family (`split`, `splitn`, `replace`, `replacen`, `find`,
+# `rfind`, `starts_with`, `ends_with`, `trim_matches`, `contains`, …) where a
+# `char` literal works instead — `s.split('/')` rather than `s.split("/")`.
+# A `&str` pattern, even one byte long, goes through the general substring
+# searcher, whereas a `char` pattern compiles to a direct byte/scalar scan; the
+# `char` form is faster and states "match this one character" more precisely.
+# This installer is string-heavy — it parses filesystem paths and assembles the
+# per-OS launcher scripts with `format!` and string ops — so single-char splits
+# and replacements recur and will keep recurring as the script builders grow.
+# The lint sits in the same efficiency family as the crate's existing
+# `redundant_clone`, `or_fun_call`, and `map_unwrap_or` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+single_char_pattern = "deny"
