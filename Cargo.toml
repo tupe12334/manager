@@ -132,6 +132,17 @@ let_underscore_must_use = "deny"
 # panic on a non-object value in an existing settings.json) has been rewritten to
 # use the serde_json map API, so `deny` locks in the clean state.
 indexing_slicing = "deny"
+# Flag glob imports (`use foo::*`) in favor of explicit, named imports. A wildcard
+# pulls an unknown, version-dependent set of names into scope: a reader can no
+# longer tell which module a given identifier comes from, and a dependency upgrade
+# can silently introduce a name that shadows or collides with a local one. Explicit
+# imports keep every name's provenance visible at the top of the file and make the
+# crate's actual surface area auditable. This sits in the same readability family as
+# the crate's existing control-flow rules (`collapsible_if`, `redundant_else`,
+# `manual_let_else`). The codebase uses only named imports today (e.g.
+# `use std::os::unix::fs::PermissionsExt;`), so `deny` locks in the clean state and
+# prevents future regressions.
+wildcard_imports = "deny"
 # Replace a closure that does nothing but forward its argument to a method call
 # (`|s| s.to_string()`, `|p| p.display()`, `|e| e.to_string()`) with a direct
 # method reference (`ToString::to_string`, `Path::display`). This crate is
