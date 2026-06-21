@@ -154,3 +154,14 @@ wildcard_imports = "deny"
 # current violations exist, so `deny` locks in the clean state and prevents
 # future regressions.
 redundant_closure_for_method_calls = "deny"
+# Flag a `.clone()`/`.to_owned()`/`.to_string()`/`.to_vec()` whose result is the
+# last use of the cloned value: the original is never touched again, so the clone
+# allocates a fresh copy only to discard the original. The value could be moved
+# (or used directly) with no copy at all. This installer threads `PathBuf`/
+# `String` config values through the per-OS install flows, where a redundant
+# clone is a needless heap allocation on every run; dropping it also clarifies
+# which binding actually owns the data and where it moves. It sits in the same
+# efficiency/readability family as the crate's existing `map_unwrap_or`,
+# `or_fun_call`, and `redundant_closure_for_method_calls` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+redundant_clone = "deny"
