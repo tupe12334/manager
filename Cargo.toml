@@ -134,3 +134,13 @@ indexing_slicing = "deny"
 # current violations exist, so `deny` locks in the clean state and prevents
 # future regressions.
 redundant_closure_for_method_calls = "deny"
+# Require code-like tokens in doc comments to be wrapped in backticks: identifiers
+# (`PathBuf`, `serde_json`), paths, and bare URLs. This is the formatting sibling
+# of the crate's doc-contract policy (`missing_panics_doc`, `missing_errors_doc`):
+# those lints force the `# Panics`/`# Errors` sections to exist, and this one keeps
+# the prose inside them rendering correctly — an unbacktick'd `Path` reads as plain
+# text and an unbacktick'd URL is not linkified in the generated rustdoc. Catching
+# it at the lint level keeps the public API docs clean and consistent instead of
+# relying on review to spot mis-rendered identifiers. No current violations exist,
+# so `deny` locks in the clean state and prevents future regressions.
+doc_markdown = "deny"
