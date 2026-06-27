@@ -50,6 +50,11 @@ missing_errors_doc = "deny"
 # conditionals add indentation and obscure the single combined condition that is
 # actually being checked; collapsing them keeps control flow flat and readable.
 collapsible_if = "deny"
+# Flag functions that take an argument by value (consuming/moving it) when the
+# body only needs it by reference. Borrowing instead avoids needless moves/clones
+# and makes the signature document intent: `&T` means "only read", by-value means
+# "takes ownership". Keeps call sites from surrendering ownership they could keep.
+needless_pass_by_value = "deny"
 # Inline trivial arguments directly into format strings (`format!("{x}")` instead
 # of `format!("{}", x)`). This crate is format-heavy (the per-OS installer scripts
 # are built with `format!`), and inline captures keep each format call's data next
