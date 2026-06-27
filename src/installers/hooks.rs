@@ -71,12 +71,12 @@ fn setup_stop_hook(home: &Path) {
     let mut settings: serde_json::Value = if settings_path.exists() {
         let content =
             fs::read_to_string(&settings_path).expect("failed to read ~/.claude/settings.json");
-        serde_json::from_str(&content).unwrap_or(serde_json::json!({}))
+        serde_json::from_str(&content).unwrap_or_else(|_| serde_json::json!({}))
     } else {
         serde_json::json!({})
     };
 
-    settings["hooks"]["Stop"] = serde_json::json!([{
+    let stop_hook = serde_json::json!([{
         "hooks": [{
             "type": "command",
             "command": "bash ~/.claude/hooks/speak-response.sh",
@@ -84,6 +84,25 @@ fn setup_stop_hook(home: &Path) {
             "timeout": 10
         }]
     }]);
+
+    // Ensure the document root and its `hooks` entry are JSON objects, then set
+    // only the `Stop` key so any sibling hook types are preserved. Using the
+    // serde_json map API instead of `settings["hooks"]["Stop"]` indexing avoids
+    // a panic if an existing settings.json holds a non-object at those keys.
+    if !settings.is_object() {
+        settings = serde_json::json!({});
+    }
+    if let Some(root) = settings.as_object_mut() {
+        let hooks = root
+            .entry("hooks")
+            .or_insert_with(|| serde_json::json!({}));
+        if !hooks.is_object() {
+            *hooks = serde_json::json!({});
+        }
+        if let Some(hooks_map) = hooks.as_object_mut() {
+            hooks_map.insert("Stop".to_string(), stop_hook);
+        }
+    }
 
     let new_content =
         serde_json::to_string_pretty(&settings).expect("failed to serialize settings.json") + "\n";

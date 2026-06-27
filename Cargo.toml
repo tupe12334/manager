@@ -13,11 +13,39 @@ dirs = "5"
 serde_json = "1"
 
 [lints.clippy]
+# Flag function parameters typed as `&PathBuf`/`&String`/`&Vec<T>` that should
+# be the borrowed slice type `&Path`/`&str`/`&[T]` instead. Taking the owned
+# container by reference forces a needlessly narrow API and offers no benefit
+# over the slice form, which accepts more inputs (any `Path`, string literal, or
+# array) with zero extra allocation and states the "I only read this" intent.
+# The installer threads filesystem paths around by reference, so this keeps those
+# signatures general and idiomatic.
+ptr_arg = "deny"
+# Catch eagerly-evaluated arguments to `unwrap_or`/`or`/`get_or_insert` and
+# friends that should be deferred to their `*_else` lazy counterparts.
+or_fun_call = "deny"
+# Collapse `.map(f).unwrap_or(default)` / `.map(f).unwrap_or_else(g)` into the
+# dedicated `.map_or(default, f)` / `.map_or_else(g, f)` combinators. The single
+# call states the "transform, else fall back" intent directly, avoids the extra
+# intermediate `Option`/`Result`, and reads top-to-bottom instead of a chain that
+# has to be mentally unwound. It also pairs with the `or_fun_call` policy above:
+# the `unwrap_or` form eagerly evaluates its default, which `map_or_else` makes
+# lazy. No current violations exist, so `deny` locks in the clean state and
+# prevents future regressions.
+map_unwrap_or = "deny"
 # Require a `# Panics` documentation section on public, documented functions that
 # may panic. Callers reading the docs should know up front which inputs or states
 # can abort the program, instead of discovering it from a runtime crash. This
 # keeps the panic contract of the public API explicit and accurate.
 missing_panics_doc = "deny"
+# Require an `# Errors` documentation section on public, documented functions that
+# return `Result`. This is the sibling of `missing_panics_doc` for the crate's
+# `?`-based error-propagation policy: callers should learn from the docs which
+# conditions yield an `Err` (failed filesystem ops, missing config, bad paths)
+# instead of discovering them at runtime. Documenting the error contract keeps the
+# fallible public API explicit and accurate. No current violations exist, so `deny`
+# locks in the clean state and prevents future regressions.
+missing_errors_doc = "deny"
 # Flatten nested `if` statements that can be combined with `&&`. Deeply nested
 # conditionals add indentation and obscure the single combined condition that is
 # actually being checked; collapsing them keeps control flow flat and readable.
@@ -27,6 +55,12 @@ collapsible_if = "deny"
 # and makes the signature document intent: `&T` means "only read", by-value means
 # "takes ownership". Keeps call sites from surrendering ownership they could keep.
 needless_pass_by_value = "deny"
+# Inline trivial arguments directly into format strings (`format!("{x}")` instead
+# of `format!("{}", x)`). This crate is format-heavy (the per-OS installer scripts
+# are built with `format!`), and inline captures keep each format call's data next
+# to its placeholder, which is shorter and easier to read. The codebase already
+# follows this style; enabling the lint locks it in and catches regressions.
+uninlined_format_args = "deny"
 # Flag `.expect()` on `Result`/`Option`. This installer performs many filesystem
 # operations (create dirs, chmod, read/write config) whose failures should be
 # reported with context and propagated, not turned into a panic + backtrace that
@@ -34,6 +68,13 @@ needless_pass_by_value = "deny"
 # call sites surface as tracked tech debt without breaking the build; new code
 # should prefer `?`-based error propagation over `expect`.
 expect_used = "warn"
+# Flag `.unwrap()` on `Result`/`Option`, the sibling footgun to `expect()`: it
+# panics on `Err`/`None` with no context at all, aborting a partially-applied
+# install instead of propagating a recoverable error. The codebase currently has
+# zero `unwrap()` call sites, so this is set to "deny" (stronger than the `warn`
+# used for `expect_used`, which has grandfathered call sites) to lock in that
+# clean state and force new code onto `?`-based error propagation.
+unwrap_used = "deny"
 # Prefer `let ... else { diverge }` over a verbose `match`/`if let ... else`
 # whose only job is to bind the happy path and otherwise return/break/continue.
 # The dedicated construct states "bind or diverge" in one line, keeps the bound
@@ -41,3 +82,125 @@ expect_used = "warn"
 # current violations exist, so `deny` keeps the build green while preventing
 # future regressions.
 manual_let_else = "deny"
+# Flag the `panic!`/`unreachable!`/`todo!`/`unimplemented!` macros. This extends
+# the crate's existing panic-safety policy (`missing_panics_doc`, `expect_used`)
+# to explicit panic macros: an installer that aborts mid-run can leave the
+# install half-applied, so failures should carry context and ideally propagate
+# rather than crash with a raw backtrace. Set to "warn" (mirroring `expect_used`)
+# so the one existing call site surfaces as tracked tech debt without breaking
+# the build, while new `panic!` macros are discouraged in favor of contextful
+# error handling.
+panic = "warn"
+# Flag `match` arms whose bodies are identical and could be merged with a `|`
+# pattern. Two arms with the same body are usually either an accidental
+# copy-paste (the second body should differ but was never edited) or needless
+# duplication that drifts out of sync when only one copy is updated. This
+# installer branches per-OS in several `match`es, so collapsing identical arms
+# keeps the platform logic honest and surfaces arms that were *meant* to diverge.
+# No current violations exist, so `deny` locks in the clean state and prevents
+# future regressions.
+match_same_arms = "deny"
+# Require a terminating `;` on the final statement of a block when that statement
+# evaluates to `()`, instead of leaving it as a bare tail expression. This crate
+# is full of side-effecting filesystem calls (write files, create dirs, chmod);
+# a trailing `;` makes it explicit that such a statement runs for its side effect
+# and yields nothing, rather than reading like a value the block returns. It also
+# pairs with the readability lints already enabled here (`collapsible_if`,
+# `manual_let_else`, `uninlined_format_args`). No current violations exist, so
+# `deny` keeps the build green while preventing future drift.
+semicolon_if_nothing_returned = "deny"
+# Flag an `else` block that follows an `if` whose every branch diverges
+# (`return`/`break`/`continue`/`panic!`): the `else` is redundant because the
+# happy path can simply continue at the outer scope. Dropping it removes a level
+# of indentation and makes the early-exit guard read as a guard. This sits in the
+# same control-flow-flattening family as the crate's existing `collapsible_if`
+# and `manual_let_else` denies. No current violations exist, so `deny` keeps the
+# build green while preventing future regressions.
+redundant_else = "deny"
+# Flag `let _ = <expr>` where `<expr>` is `#[must_use]` (most importantly a
+# `Result`). Binding to `_` both discards the value and silences the
+# `unused_must_use` warning, so a failed operation is dropped with no error and
+# no diagnostic. This installer is filesystem-heavy (create dirs, chmod,
+# read/write config); a silently ignored `Result` can leave an install
+# half-applied with no signal. The lint closes the gap left by the crate's
+# existing error-safety policy (`unwrap_used`/`expect_used`/`panic`) by stopping
+# errors from being thrown away via `let _`. No current violations exist, so
+# `deny` locks in the clean state and prevents regressions.
+let_underscore_must_use = "deny"
+# Flag direct `[]` indexing/slicing (`v[i]`, `s[a..b]`, `value["key"]`) that
+# panics out of bounds, in favor of the non-panicking `.get(..)` / `.get_mut(..)`
+# accessors. This extends the crate's panic-safety policy (`unwrap_used`,
+# `expect_used`, `panic`, `missing_panics_doc`) to indexing: an installer that
+# aborts mid-run on an unexpected index can leave the install half-applied, so
+# fallible lookups should be handled explicitly rather than panic with a raw
+# backtrace. The one prior call site (`settings["hooks"]["Stop"]`, which would
+# panic on a non-object value in an existing settings.json) has been rewritten to
+# use the serde_json map API, so `deny` locks in the clean state.
+indexing_slicing = "deny"
+# Flag glob imports (`use foo::*`) in favor of explicit, named imports. A wildcard
+# pulls an unknown, version-dependent set of names into scope: a reader can no
+# longer tell which module a given identifier comes from, and a dependency upgrade
+# can silently introduce a name that shadows or collides with a local one. Explicit
+# imports keep every name's provenance visible at the top of the file and make the
+# crate's actual surface area auditable. This sits in the same readability family as
+# the crate's existing control-flow rules (`collapsible_if`, `redundant_else`,
+# `manual_let_else`). The codebase uses only named imports today (e.g.
+# `use std::os::unix::fs::PermissionsExt;`), so `deny` locks in the clean state and
+# prevents future regressions.
+wildcard_imports = "deny"
+# Replace a closure that does nothing but forward its argument to a method call
+# (`|s| s.to_string()`, `|p| p.display()`, `|e| e.to_string()`) with a direct
+# method reference (`ToString::to_string`, `Path::display`). This crate is
+# closure-heavy: the per-OS installer flows are full of `map`/`unwrap_or_else`
+# chains, and a forwarding closure adds a layer of indirection that hides the
+# single method actually being applied. The method-reference form is shorter,
+# states the intent directly, and reads in the same family as the crate's other
+# readability denies (`map_unwrap_or`, `redundant_else`, `manual_let_else`). No
+# current violations exist, so `deny` locks in the clean state and prevents
+# future regressions.
+redundant_closure_for_method_calls = "deny"
+# Flag a `.clone()`/`.to_owned()`/`.to_string()`/`.to_vec()` whose result is the
+# last use of the cloned value: the original is never touched again, so the clone
+# allocates a fresh copy only to discard the original. The value could be moved
+# (or used directly) with no copy at all. This installer threads `PathBuf`/
+# `String` config values through the per-OS install flows, where a redundant
+# clone is a needless heap allocation on every run; dropping it also clarifies
+# which binding actually owns the data and where it moves. It sits in the same
+# efficiency/readability family as the crate's existing `map_unwrap_or`,
+# `or_fun_call`, and `redundant_closure_for_method_calls` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+redundant_clone = "deny"
+# Prefer `for x in &collection` / `for x in &mut collection` over the explicit
+# `for x in collection.iter()` / `.iter_mut()` form. The reference syntax is
+# shorter, is the idiomatic way to iterate without consuming, and avoids the
+# reader having to confirm that `.iter()` isn't secretly `.into_iter()` (which
+# would move). It sits in the same readability family as the crate's existing
+# `redundant_closure_for_method_calls` and `redundant_else` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+explicit_iter_loop = "deny"
+# Flag a function parameter taken as `&T` where `T` is a small `Copy` type (e.g.
+# `&u8`, `&bool`, `&char`, a tiny `#[derive(Copy)]` struct). For such types the
+# reference is the same size as (or larger than) the value, so passing by
+# reference buys nothing: it adds a pointer indirection on every read and forces
+# callers to have an addressable place to borrow from. Taking the value by `T`
+# instead is at least as cheap, removes the indirection, and states "I just need
+# the value" directly. This is the small-`Copy` sibling of the crate's existing
+# `ptr_arg` deny (which flags `&String`/`&Vec<T>`/`&PathBuf` params that should be
+# borrowed slices): together they keep the installer's by-reference parameter
+# choices honest about whether a borrow is actually needed. No current violations
+# exist, so `deny` locks in the clean state and prevents future regressions.
+trivially_copy_pass_by_ref = "deny"
+# Flag a single-character string literal used as a pattern argument to the
+# `str` search/split family (`split`, `splitn`, `replace`, `replacen`, `find`,
+# `rfind`, `starts_with`, `ends_with`, `trim_matches`, `contains`, …) where a
+# `char` literal works instead — `s.split('/')` rather than `s.split("/")`.
+# A `&str` pattern, even one byte long, goes through the general substring
+# searcher, whereas a `char` pattern compiles to a direct byte/scalar scan; the
+# `char` form is faster and states "match this one character" more precisely.
+# This installer is string-heavy — it parses filesystem paths and assembles the
+# per-OS launcher scripts with `format!` and string ops — so single-char splits
+# and replacements recur and will keep recurring as the script builders grow.
+# The lint sits in the same efficiency family as the crate's existing
+# `redundant_clone`, `or_fun_call`, and `map_unwrap_or` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+single_char_pattern = "deny"
