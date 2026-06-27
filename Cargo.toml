@@ -166,6 +166,16 @@ wildcard_imports = "deny"
 # current violations exist, so `deny` locks in the clean state and prevents
 # future regressions.
 redundant_closure_for_method_calls = "deny"
+# Flag implicit-clone methods (`.to_owned()`, `.to_vec()`, `.to_path_buf()`,
+# `.to_os_string()`, ...) called on a value that is already the owned type, where
+# a plain `.clone()` does the same thing. This installer threads owned filesystem
+# paths (`PathBuf`/`OsString`) and strings around, and the implicit-clone forms
+# hide that a full allocation/copy is happening behind a name that reads like a
+# cheap conversion. Preferring `.clone()` makes the clone explicit and uniform, so
+# the cost is visible at the call site and matches the crate's other clarity denies
+# (`redundant_closure_for_method_calls`, `map_unwrap_or`, `redundant_else`). No
+# current violations exist, so `deny` locks in the clean state and prevents drift.
+implicit_clone = "deny"
 # Flag a `.clone()`/`.to_owned()`/`.to_string()`/`.to_vec()` whose result is the
 # last use of the cloned value: the original is never touched again, so the clone
 # allocates a fresh copy only to discard the original. The value could be moved
