@@ -86,6 +86,15 @@ manual_let_else = "deny"
 # the build, while new `panic!` macros are discouraged in favor of contextful
 # error handling.
 panic = "warn"
+# Flag `match` arms whose bodies are identical and could be merged with a `|`
+# pattern. Two arms with the same body are usually either an accidental
+# copy-paste (the second body should differ but was never edited) or needless
+# duplication that drifts out of sync when only one copy is updated. This
+# installer branches per-OS in several `match`es, so collapsing identical arms
+# keeps the platform logic honest and surfaces arms that were *meant* to diverge.
+# No current violations exist, so `deny` locks in the clean state and prevents
+# future regressions.
+match_same_arms = "deny"
 # Require a terminating `;` on the final statement of a block when that statement
 # evaluates to `()`, instead of leaving it as a bare tail expression. This crate
 # is full of side-effecting filesystem calls (write files, create dirs, chmod);
@@ -134,6 +143,17 @@ indexing_slicing = "deny"
 # `installers::hooks`) has been switched to `.to_owned()`, so `deny` locks in the
 # clean state and prevents regressions.
 str_to_string = "deny"
+# Flag glob imports (`use foo::*`) in favor of explicit, named imports. A wildcard
+# pulls an unknown, version-dependent set of names into scope: a reader can no
+# longer tell which module a given identifier comes from, and a dependency upgrade
+# can silently introduce a name that shadows or collides with a local one. Explicit
+# imports keep every name's provenance visible at the top of the file and make the
+# crate's actual surface area auditable. This sits in the same readability family as
+# the crate's existing control-flow rules (`collapsible_if`, `redundant_else`,
+# `manual_let_else`). The codebase uses only named imports today (e.g.
+# `use std::os::unix::fs::PermissionsExt;`), so `deny` locks in the clean state and
+# prevents future regressions.
+wildcard_imports = "deny"
 # Replace a closure that does nothing but forward its argument to a method call
 # (`|s| s.to_string()`, `|p| p.display()`, `|e| e.to_string()`) with a direct
 # method reference (`ToString::to_string`, `Path::display`). This crate is
@@ -145,3 +165,48 @@ str_to_string = "deny"
 # current violations exist, so `deny` locks in the clean state and prevents
 # future regressions.
 redundant_closure_for_method_calls = "deny"
+# Flag a `.clone()`/`.to_owned()`/`.to_string()`/`.to_vec()` whose result is the
+# last use of the cloned value: the original is never touched again, so the clone
+# allocates a fresh copy only to discard the original. The value could be moved
+# (or used directly) with no copy at all. This installer threads `PathBuf`/
+# `String` config values through the per-OS install flows, where a redundant
+# clone is a needless heap allocation on every run; dropping it also clarifies
+# which binding actually owns the data and where it moves. It sits in the same
+# efficiency/readability family as the crate's existing `map_unwrap_or`,
+# `or_fun_call`, and `redundant_closure_for_method_calls` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+redundant_clone = "deny"
+# Prefer `for x in &collection` / `for x in &mut collection` over the explicit
+# `for x in collection.iter()` / `.iter_mut()` form. The reference syntax is
+# shorter, is the idiomatic way to iterate without consuming, and avoids the
+# reader having to confirm that `.iter()` isn't secretly `.into_iter()` (which
+# would move). It sits in the same readability family as the crate's existing
+# `redundant_closure_for_method_calls` and `redundant_else` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+explicit_iter_loop = "deny"
+# Flag a function parameter taken as `&T` where `T` is a small `Copy` type (e.g.
+# `&u8`, `&bool`, `&char`, a tiny `#[derive(Copy)]` struct). For such types the
+# reference is the same size as (or larger than) the value, so passing by
+# reference buys nothing: it adds a pointer indirection on every read and forces
+# callers to have an addressable place to borrow from. Taking the value by `T`
+# instead is at least as cheap, removes the indirection, and states "I just need
+# the value" directly. This is the small-`Copy` sibling of the crate's existing
+# `ptr_arg` deny (which flags `&String`/`&Vec<T>`/`&PathBuf` params that should be
+# borrowed slices): together they keep the installer's by-reference parameter
+# choices honest about whether a borrow is actually needed. No current violations
+# exist, so `deny` locks in the clean state and prevents future regressions.
+trivially_copy_pass_by_ref = "deny"
+# Flag a single-character string literal used as a pattern argument to the
+# `str` search/split family (`split`, `splitn`, `replace`, `replacen`, `find`,
+# `rfind`, `starts_with`, `ends_with`, `trim_matches`, `contains`, …) where a
+# `char` literal works instead — `s.split('/')` rather than `s.split("/")`.
+# A `&str` pattern, even one byte long, goes through the general substring
+# searcher, whereas a `char` pattern compiles to a direct byte/scalar scan; the
+# `char` form is faster and states "match this one character" more precisely.
+# This installer is string-heavy — it parses filesystem paths and assembles the
+# per-OS launcher scripts with `format!` and string ops — so single-char splits
+# and replacements recur and will keep recurring as the script builders grow.
+# The lint sits in the same efficiency family as the crate's existing
+# `redundant_clone`, `or_fun_call`, and `map_unwrap_or` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+single_char_pattern = "deny"
