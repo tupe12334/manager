@@ -165,6 +165,14 @@ redundant_closure_for_method_calls = "deny"
 # `or_fun_call`, and `redundant_closure_for_method_calls` denies. No current
 # violations exist, so `deny` locks in the clean state and prevents regressions.
 redundant_clone = "deny"
+# Prefer `for x in &collection` / `for x in &mut collection` over the explicit
+# `for x in collection.iter()` / `.iter_mut()` form. The reference syntax is
+# shorter, is the idiomatic way to iterate without consuming, and avoids the
+# reader having to confirm that `.iter()` isn't secretly `.into_iter()` (which
+# would move). It sits in the same readability family as the crate's existing
+# `redundant_closure_for_method_calls` and `redundant_else` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+explicit_iter_loop = "deny"
 # Flag a function parameter taken as `&T` where `T` is a small `Copy` type (e.g.
 # `&u8`, `&bool`, `&char`, a tiny `#[derive(Copy)]` struct). For such types the
 # reference is the same size as (or larger than) the value, so passing by
@@ -189,3 +197,17 @@ trivially_copy_pass_by_ref = "deny"
 # `redundant_clone` and `or_fun_call` denies. No current violations exist, so
 # `deny` locks in the clean state and prevents future regressions.
 format_push_string = "deny"
+# Flag a single-character string literal used as a pattern argument to the
+# `str` search/split family (`split`, `splitn`, `replace`, `replacen`, `find`,
+# `rfind`, `starts_with`, `ends_with`, `trim_matches`, `contains`, …) where a
+# `char` literal works instead — `s.split('/')` rather than `s.split("/")`.
+# A `&str` pattern, even one byte long, goes through the general substring
+# searcher, whereas a `char` pattern compiles to a direct byte/scalar scan; the
+# `char` form is faster and states "match this one character" more precisely.
+# This installer is string-heavy — it parses filesystem paths and assembles the
+# per-OS launcher scripts with `format!` and string ops — so single-char splits
+# and replacements recur and will keep recurring as the script builders grow.
+# The lint sits in the same efficiency family as the crate's existing
+# `redundant_clone`, `or_fun_call`, and `map_unwrap_or` denies. No current
+# violations exist, so `deny` locks in the clean state and prevents regressions.
+single_char_pattern = "deny"
