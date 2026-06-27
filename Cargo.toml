@@ -207,6 +207,18 @@ explicit_iter_loop = "deny"
 # choices honest about whether a borrow is actually needed. No current violations
 # exist, so `deny` locks in the clean state and prevents future regressions.
 trivially_copy_pass_by_ref = "deny"
+# Flag building a `String` by pushing the result of `format!` onto it
+# (`s.push_str(&format!(...))` or `s += &format!(...)`). The `format!` first
+# allocates a throwaway `String`, formats into it, then immediately copies its
+# bytes into `s` and drops it — one wasted heap allocation per call. Writing the
+# arguments straight into the buffer with `write!(s, ...)` (via `std::fmt::Write`)
+# formats once, in place, with no intermediate. This installer is format-heavy:
+# the per-OS launcher/hook scripts are assembled with `format!`, so this guards
+# the path where those pieces would be concatenated onto an existing buffer. It
+# sits in the same allocation-efficiency family as the crate's existing
+# `redundant_clone` and `or_fun_call` denies. No current violations exist, so
+# `deny` locks in the clean state and prevents future regressions.
+format_push_string = "deny"
 # Flag a single-character string literal used as a pattern argument to the
 # `str` search/split family (`split`, `splitn`, `replace`, `replacen`, `find`,
 # `rfind`, `starts_with`, `ends_with`, `trim_matches`, `contains`, …) where a
