@@ -233,3 +233,13 @@ format_push_string = "deny"
 # `redundant_clone`, `or_fun_call`, and `map_unwrap_or` denies. No current
 # violations exist, so `deny` locks in the clean state and prevents regressions.
 single_char_pattern = "deny"
+# Require a `reason = "..."` clause on every `#[allow(clippy::...)]` attribute.
+# This codebase already documents WHY each lint is enabled via a comment in this
+# table; the same discipline should apply to any site that suppresses a lint
+# inline: a reader who sees `#[allow(clippy::indexing_slicing)]` should
+# immediately know why that call site is exempt, not have to hunt for context.
+# The `reason` clause appears in IDE hover and in `cargo clippy` output, keeping
+# suppressions self-documenting at the point of use. No `#[allow]` attributes
+# exist in the codebase today, so `deny` locks in the clean state and ensures
+# any future suppression is justified in writing.
+allow_attributes_without_reason = "deny"
