@@ -243,3 +243,12 @@ single_char_pattern = "deny"
 # exist in the codebase today, so `deny` locks in the clean state and ensures
 # any future suppression is justified in writing.
 allow_attributes_without_reason = "deny"
+# Flag leftover `dbg!(...)` macro calls. `dbg!` writes its argument (and the
+# file/line it was called from) to stderr and returns the value unchanged —
+# useful while debugging, but a call left in committed code means every install
+# run prints internal debug noise to the user's terminal. This closes a gap next
+# to the crate's other developer-hygiene denies (`allow_attributes_without_reason`,
+# `panic`): both catch things that are fine mid-debugging but shouldn't ship. No
+# `dbg!` call sites exist in the codebase today, so `deny` locks in the clean
+# state and catches any future one before it merges.
+dbg_macro = "deny"
