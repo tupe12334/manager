@@ -50,6 +50,11 @@ missing_errors_doc = "deny"
 # conditionals add indentation and obscure the single combined condition that is
 # actually being checked; collapsing them keeps control flow flat and readable.
 collapsible_if = "deny"
+# Flag functions that take an argument by value (consuming/moving it) when the
+# body only needs it by reference. Borrowing instead avoids needless moves/clones
+# and makes the signature document intent: `&T` means "only read", by-value means
+# "takes ownership". Keeps call sites from surrendering ownership they could keep.
+needless_pass_by_value = "deny"
 # Inline trivial arguments directly into format strings (`format!("{x}")` instead
 # of `format!("{}", x)`). This crate is format-heavy (the per-OS installer scripts
 # are built with `format!`), and inline captures keep each format call's data next
@@ -143,6 +148,13 @@ indexing_slicing = "deny"
 # `installers::hooks`) has been switched to `.to_owned()`, so `deny` locks in the
 # clean state and prevents regressions.
 str_to_string = "deny"
+# Use `Self` instead of repeating the concrete type name inside an `impl` block
+# (return types, `Type { .. }` literals, `Type::new()` calls, associated paths).
+# `Self` is refactor-safe (renaming the type needs no edits inside its own impls),
+# makes it unambiguous that a value is the impl's own type, and keeps impl bodies
+# uniform. No current violations exist, so `deny` locks in the clean state and
+# prevents future regressions.
+use_self = "deny"
 # Flag glob imports (`use foo::*`) in favor of explicit, named imports. A wildcard
 # pulls an unknown, version-dependent set of names into scope: a reader can no
 # longer tell which module a given identifier comes from, and a dependency upgrade
@@ -165,6 +177,16 @@ wildcard_imports = "deny"
 # current violations exist, so `deny` locks in the clean state and prevents
 # future regressions.
 redundant_closure_for_method_calls = "deny"
+# Flag implicit-clone methods (`.to_owned()`, `.to_vec()`, `.to_path_buf()`,
+# `.to_os_string()`, ...) called on a value that is already the owned type, where
+# a plain `.clone()` does the same thing. This installer threads owned filesystem
+# paths (`PathBuf`/`OsString`) and strings around, and the implicit-clone forms
+# hide that a full allocation/copy is happening behind a name that reads like a
+# cheap conversion. Preferring `.clone()` makes the clone explicit and uniform, so
+# the cost is visible at the call site and matches the crate's other clarity denies
+# (`redundant_closure_for_method_calls`, `map_unwrap_or`, `redundant_else`). No
+# current violations exist, so `deny` locks in the clean state and prevents drift.
+implicit_clone = "deny"
 # Flag a `.clone()`/`.to_owned()`/`.to_string()`/`.to_vec()` whose result is the
 # last use of the cloned value: the original is never touched again, so the clone
 # allocates a fresh copy only to discard the original. The value could be moved
@@ -196,6 +218,18 @@ explicit_iter_loop = "deny"
 # choices honest about whether a borrow is actually needed. No current violations
 # exist, so `deny` locks in the clean state and prevents future regressions.
 trivially_copy_pass_by_ref = "deny"
+# Flag building a `String` by pushing the result of `format!` onto it
+# (`s.push_str(&format!(...))` or `s += &format!(...)`). The `format!` first
+# allocates a throwaway `String`, formats into it, then immediately copies its
+# bytes into `s` and drops it — one wasted heap allocation per call. Writing the
+# arguments straight into the buffer with `write!(s, ...)` (via `std::fmt::Write`)
+# formats once, in place, with no intermediate. This installer is format-heavy:
+# the per-OS launcher/hook scripts are assembled with `format!`, so this guards
+# the path where those pieces would be concatenated onto an existing buffer. It
+# sits in the same allocation-efficiency family as the crate's existing
+# `redundant_clone` and `or_fun_call` denies. No current violations exist, so
+# `deny` locks in the clean state and prevents future regressions.
+format_push_string = "deny"
 # Flag a single-character string literal used as a pattern argument to the
 # `str` search/split family (`split`, `splitn`, `replace`, `replacen`, `find`,
 # `rfind`, `starts_with`, `ends_with`, `trim_matches`, `contains`, …) where a
@@ -210,3 +244,22 @@ trivially_copy_pass_by_ref = "deny"
 # `redundant_clone`, `or_fun_call`, and `map_unwrap_or` denies. No current
 # violations exist, so `deny` locks in the clean state and prevents regressions.
 single_char_pattern = "deny"
+# Require a `reason = "..."` clause on every `#[allow(clippy::...)]` attribute.
+# This codebase already documents WHY each lint is enabled via a comment in this
+# table; the same discipline should apply to any site that suppresses a lint
+# inline: a reader who sees `#[allow(clippy::indexing_slicing)]` should
+# immediately know why that call site is exempt, not have to hunt for context.
+# The `reason` clause appears in IDE hover and in `cargo clippy` output, keeping
+# suppressions self-documenting at the point of use. No `#[allow]` attributes
+# exist in the codebase today, so `deny` locks in the clean state and ensures
+# any future suppression is justified in writing.
+allow_attributes_without_reason = "deny"
+# Flag leftover `dbg!(...)` macro calls. `dbg!` writes its argument (and the
+# file/line it was called from) to stderr and returns the value unchanged —
+# useful while debugging, but a call left in committed code means every install
+# run prints internal debug noise to the user's terminal. This closes a gap next
+# to the crate's other developer-hygiene denies (`allow_attributes_without_reason`,
+# `panic`): both catch things that are fine mid-debugging but shouldn't ship. No
+# `dbg!` call sites exist in the codebase today, so `deny` locks in the clean
+# state and catches any future one before it merges.
+dbg_macro = "deny"
