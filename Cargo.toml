@@ -148,6 +148,16 @@ indexing_slicing = "deny"
 # `installers::hooks`) has been switched to `.to_owned()`, so `deny` locks in the
 # clean state and prevents regressions.
 str_to_string = "deny"
+# Flag `if !cond { a } else { b }` and suggest inverting the test to the positive
+# form `if cond { b } else { a }`. A negated condition forces the reader to flip
+# the logic in their head before they can match each branch to its trigger, and it
+# reads especially awkwardly when the `else` is the common/happy path. Stating the
+# condition positively keeps the branch that fires "when the thing is true" first
+# and makes the two-way choice read top-to-bottom. This sits in the same
+# control-flow-readability family as the crate's existing `collapsible_if`,
+# `redundant_else`, and `manual_let_else` denies. No current violations exist, so
+# `deny` locks in the clean state and prevents future regressions.
+if_not_else = "deny"
 # Use `Self` instead of repeating the concrete type name inside an `impl` block
 # (return types, `Type { .. }` literals, `Type::new()` calls, associated paths).
 # `Self` is refactor-safe (renaming the type needs no edits inside its own impls),
@@ -177,6 +187,16 @@ wildcard_imports = "deny"
 # current violations exist, so `deny` locks in the clean state and prevents
 # future regressions.
 redundant_closure_for_method_calls = "deny"
+# Require code-like tokens in doc comments to be wrapped in backticks: identifiers
+# (`PathBuf`, `serde_json`), paths, and bare URLs. This is the formatting sibling
+# of the crate's doc-contract policy (`missing_panics_doc`, `missing_errors_doc`):
+# those lints force the `# Panics`/`# Errors` sections to exist, and this one keeps
+# the prose inside them rendering correctly — an unbacktick'd `Path` reads as plain
+# text and an unbacktick'd URL is not linkified in the generated rustdoc. Catching
+# it at the lint level keeps the public API docs clean and consistent instead of
+# relying on review to spot mis-rendered identifiers. No current violations exist,
+# so `deny` locks in the clean state and prevents future regressions.
+doc_markdown = "deny"
 # Flag implicit-clone methods (`.to_owned()`, `.to_vec()`, `.to_path_buf()`,
 # `.to_os_string()`, ...) called on a value that is already the owned type, where
 # a plain `.clone()` does the same thing. This installer threads owned filesystem
