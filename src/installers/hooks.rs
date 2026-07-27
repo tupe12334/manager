@@ -100,7 +100,7 @@ fn setup_stop_hook(home: &Path) {
             *hooks = serde_json::json!({});
         }
         if let Some(hooks_map) = hooks.as_object_mut() {
-            hooks_map.insert("Stop".to_string(), stop_hook);
+            hooks_map.insert("Stop".to_owned(), stop_hook);
         }
     }
 
