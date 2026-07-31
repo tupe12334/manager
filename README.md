@@ -32,3 +32,7 @@ cargo build --release
 
 The installer takes no arguments or environment variables — it always installs for the current OS
 into the paths listed above.
+
+## Related projects
+
+- [moadim](https://moadim.io/) — loop engineering: build, schedule & run agent loops.
